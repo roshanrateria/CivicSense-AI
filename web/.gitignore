@@ -1,0 +1,44 @@
+﻿# ── Secrets — NEVER commit ───────────────────────────────
+.env
+.env.*
+*.env
+
+# ── Next.js build output ─────────────────────────────────
+/.next/
+/out/
+/build/
+
+# ── Dependencies ─────────────────────────────────────────
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ── User uploads (runtime, not source) ───────────────────
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# ── TypeScript / Next.js generated ───────────────────────
+next-env.d.ts
+*.tsbuildinfo
+
+# ── Testing ──────────────────────────────────────────────
+/coverage
+
+# ── Misc ─────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.pem
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.vercel
+
+# Allow the example template
+!.env.example
+

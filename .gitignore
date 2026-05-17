@@ -15,3 +15,8 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Allow the example template (no real secrets)
+!.env.example
+!**/.env.example
+
