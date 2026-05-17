@@ -1,0 +1,44 @@
+﻿{
+  "calendar_events": [
+    {
+      "event_id": "a1b2c3d4",
+      "title": "SLA Deadline: GRV-20260517-SAMPLE1",
+      "ticket_id": "GRV-20260517-SAMPLE1",
+      "event_date": "2026-05-18T10:00:00Z",
+      "description": "SLA deadline for water supply complaint",
+      "priority": "high",
+      "created_at": "2026-05-17T10:00:00Z"
+    },
+    {
+      "event_id": "e5f6g7h8",
+      "title": "SLA Deadline: GRV-20260517-SAMPLE2",
+      "ticket_id": "GRV-20260517-SAMPLE2",
+      "event_date": "2026-05-17T14:00:00Z",
+      "description": "SLA deadline for public safety complaint",
+      "priority": "critical",
+      "created_at": "2026-05-17T10:00:00Z"
+    }
+  ],
+  "tasks": [
+    {
+      "task_id": "t1a2b3c4",
+      "ticket_id": "GRV-20260517-SAMPLE1",
+      "title": "Dispatch water tanker to affected area",
+      "due_date": "2026-05-17T18:00:00Z",
+      "priority": "high",
+      "status": "pending",
+      "assigned_to": "field_officer",
+      "created_at": "2026-05-17T10:00:00Z"
+    }
+  ],
+  "notes": [
+    {
+      "note_id": "n1x2y3z4",
+      "ticket_id": "GRV-20260517-SAMPLE2",
+      "content": "Initial field inspection completed. Issue escalated to district officer.",
+      "author": "officer",
+      "note_type": "field_observation",
+      "created_at": "2026-05-17T10:00:00Z"
+    }
+  ]
+}
