@@ -6,7 +6,20 @@ Multi-agent citizen grievance lifecycle platform for India.
 
 CivicSense AI is a multilingual grievance management system that processes citizen complaints in 22+ Indian languages, classifies them, routes them to the correct government department, and tracks resolution through SLA enforcement.
 
-## Architecture
+## Repository Structure
+
+```
+CivicSense-AI/
+└── agent/
+    ├── agent.py              # Root agent + 4 sub-agents (intake, tracker, resolver, analytics)
+    ├── sahayak_mcp_server.py # MCP stdio server (calendar, tasks, notes tools)
+    ├── sahayak_mcp_data.json # Sample MCP data
+    ├── mcp_data.json         # MCP data template
+    ├── requirements.txt      # Python dependencies
+    └── __init__.py           # Package init
+```
+
+## Agent Architecture
 
 - **intake_agent** — Classifies grievances, geocodes locations, scores priority, saves to DB
 - **tracker_agent** — SLA watchdog, overdue ticket escalation, status checks
@@ -16,9 +29,12 @@ CivicSense AI is a multilingual grievance management system that processes citiz
 
 ## Setup
 
-1. Copy `.env.example` to `.env` and fill in your credentials
-2. Install dependencies: `pip install -r requirements.txt`
-3. Run: `adk web`
+```bash
+cd agent
+pip install -r requirements.txt
+cp .env.example .env   # fill in your credentials
+adk web
+```
 
 ## Environment Variables
 
