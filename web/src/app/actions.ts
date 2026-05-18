@@ -337,12 +337,20 @@ export interface EcoImpactData {
 export async function getEcoImpact(): Promise<EcoImpactData> {
   const ecoCategories = Object.keys(ECO_RATES);
 
+  // Robustly parse any date value psycopg2/pg may return (Date object, ISO string, or null)
+  function parseDate(val: unknown): Date | null {
+    if (!val) return null;
+    if (val instanceof Date) return val;
+    const d = new Date(String(val));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
   try {
     const client = await pool.connect();
     const res = await client.query(`
       SELECT
         ticket_id, category, status, priority_label,
-        created_at, sla_deadline, updated_at
+        created_at, sla_deadline, updated_at, sla_hours
       FROM tickets
       WHERE category = ANY($1::text[])
       ORDER BY created_at DESC
@@ -366,17 +374,36 @@ export async function getEcoImpact(): Promise<EcoImpactData> {
       const rate = ECO_RATES[row.category];
       if (!rate) continue;
 
-      const createdAt = new Date(row.created_at);
-      const isResolved = ["resolved", "closed", "RESOLVED", "CLOSED"].includes(row.status);
-      const resolvedAt = isResolved ? new Date(row.updated_at || row.created_at) : null;
+      // Normalise status — DB has mixed case ('open', 'OPEN', 'resolved', 'RESOLVED')
+      const statusNorm = String(row.status).toLowerCase();
+      const isResolved = statusNorm === "resolved" || statusNorm === "closed";
 
-      // Hours from creation to resolution (or now if still active)
-      const endTime = resolvedAt || now;
-      const hoursElapsed = Math.max(0, (endTime.getTime() - createdAt.getTime()) / (1000 * 60 * 60));
+      const createdAt = parseDate(row.created_at);
+      const updatedAt = parseDate(row.updated_at);
+      const slaHours  = Number(row.sla_hours) || 48;
 
-      // Savings = rate × hours elapsed (capped at 7 days to avoid outlier inflation)
+      if (!createdAt) continue;
+
+      let hoursElapsed: number;
+
+      if (isResolved) {
+        // If updated_at is valid and meaningfully after created_at, use it.
+        // Otherwise fall back to sla_hours as a proxy for how long the issue ran.
+        const rawHours = updatedAt
+          ? (updatedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60)
+          : 0;
+        hoursElapsed = rawHours > 1 ? rawHours : slaHours;
+      } else {
+        // Active ticket: hours since creation, clamped to non-negative
+        // (future-dated tickets from seed data get 0 until they become "past")
+        hoursElapsed = Math.max(0, (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60));
+      }
+
+      // Savings = rate × hours (capped at 7 days to prevent outlier inflation)
       const cappedHours = Math.min(hoursElapsed, 168);
       const savedAmount = parseFloat((rate.ratePerHour * cappedHours).toFixed(2));
+
+      const resolvedAt = isResolved ? (updatedAt || createdAt) : null;
 
       if (isResolved) {
         resolvedCount++;
@@ -386,10 +413,10 @@ export async function getEcoImpact(): Promise<EcoImpactData> {
         activeCount++;
       }
 
-      // Accumulate by type
-      if (row.category === "water_supply") totalWaterSaved += savedAmount;
-      if (row.category === "electricity") totalEnergySaved += savedAmount;
-      if (row.category === "environment") totalEmissionsAvoided += savedAmount;
+      // Accumulate totals by type
+      if (row.category === "water_supply")        totalWaterSaved        += savedAmount;
+      if (row.category === "electricity")          totalEnergySaved       += savedAmount;
+      if (row.category === "environment")          totalEmissionsAvoided  += savedAmount;
       if (row.category === "roads_infrastructure") totalAccidentsPrevented += savedAmount;
 
       // Category breakdown
@@ -402,8 +429,8 @@ export async function getEcoImpact(): Promise<EcoImpactData> {
         category: row.category,
         status: row.status,
         priorityLabel: row.priority_label,
-        createdAt: row.created_at,
-        slaDeadline: row.sla_deadline,
+        createdAt: createdAt.toISOString(),
+        slaDeadline: String(row.sla_deadline ?? ""),
         resolvedAt: resolvedAt?.toISOString() || null,
         hoursToResolve: isResolved ? parseFloat(hoursElapsed.toFixed(1)) : null,
         savedAmount,
